@@ -104,18 +104,19 @@ def how_many_decks():
     return
     
 def new_round():
-    if player.bankroll <= 4
+    if player.bankroll <= 4:
         print "Your bankroll has dropped below $5. You lose!"
         reset_game()
-    current_round.hand_num = 0
-    current_round.set_round_num(1)
-    current_round.player_hand = 0
-    current_round.player_hand_soft = 0
-    current_round.comp_hand = 0
-    current_round.comp_hand_soft = 0
-    current_round.first_comp_card = 0
-    comp_play()
-    return
+    else:
+        current_round.hand_num = 0
+        current_round.set_round_num(1)
+        current_round.player_hand = 0
+        current_round.player_hand_soft = 0
+        current_round.comp_hand = 0
+        current_round.comp_hand_soft = 0
+        current_round.first_comp_card = 0
+        comp_play()
+        return
     
 def place_bet():
     global player
