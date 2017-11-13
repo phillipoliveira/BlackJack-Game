@@ -248,3 +248,5 @@ def comp_play():
 #    print "comp hand eval: %s" %(current_round.comp_hand_eval)
 #    print "comp hand: %s" %(current_round.comp_hand)
     place_bet()
+
+play()
