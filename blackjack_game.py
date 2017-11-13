@@ -28,19 +28,31 @@ class Player(object):
         self.bet = new_bet
     
 class Round(object):
-    def __init__(self,round_num=0,comp_hand=0,comp_hand_soft=0,player_hand=0,player_hand_soft=0,hand_num=0):
+    def __init__(self,round_num=0,comp_hand=0,comp_hand_soft=0,player_hand=0,player_hand_soft=0,hand_num=0,comp_hand_eval=0,first_comp_card=0):
         self.round_num = round_num
         self.comp_hand = comp_hand
         self.comp_hand_soft = comp_hand_soft
+        self.comp_hand_eval = comp_hand_eval
         self.hand_num = hand_num
         self.player_hand = player_hand
         self.player_hand_soft = player_hand_soft
+        self.first_comp_card = first_comp_card
+
         
     def set_round_num(self,new_round_num):
         self.round_num += new_round_num
     
+    def set_first_comp_card(self,asign_first_card):
+        self.first_comp_card = asign_first_card
+    
     def set_comp_hand(self,new_comp_hand):
-        self.comp_hand = new_comp_hand
+        self.first_comp_card = new_comp_hand
+
+    def set_comp_hand_soft(self,new_comp_hand_soft):
+        self.comp_hand_soft = new_comp_hand_soft 
+        
+    def set_comp_hand_eval(self,new_comp_hand_eval):
+        self.comp_hand_eval = new_comp_hand_eval
         
     def set_player_hand(self,new_player_hand):
         self.player_hand += new_player_hand
@@ -51,10 +63,11 @@ class Round(object):
     def set_hand_num(self,new_hand_num):
         self.hand_num += new_hand_num
 
-def draw_card():
+def draw_card(printcard=True):
     card = str(choice(deck_list))
     deck_list.remove(card)
-    print_card(card)
+    if printcard == True:
+        print_card(card)
     return card
 
 def print_card(card):
@@ -81,6 +94,8 @@ def how_many_decks():
     while True:
         try: 
             num_of_decks = int(raw_input("How many decks do you want to play with?: (enter an integer)"))
+            if num_of_decks == 0:
+                raise ValueError
         except: 
             continue
         else:
@@ -88,20 +103,25 @@ def how_many_decks():
             new_round()
     return
     
+def print_dealer():
+    print "The dealer card:"
+    print_card(str(current_round.first_comp_card)
+    
 def new_round():
     current_round.hand_num = 0
     current_round.set_round_num(1)
     current_round.player_hand = 0
     current_round.player_hand_soft = 0
     current_round.comp_hand = 0
-    current_round.comp_hand_soft = 0    
+    current_round.comp_hand_soft = 0  
+    comp_play()
+    print_dealer()
     place_bet()
     return
     
 def place_bet():
-    global player
-    global current_hand
-    while True:
+        print_dealer()
+        while True:
         try: 
             bet = int(raw_input("Place your bet! Enter a number less than your current bankroll (%s): " %(player.bankroll)))
             player.set_bet(bet)
@@ -114,8 +134,7 @@ def place_bet():
         return
 
 def player_hit(double=True):
-    global new_round
-    player_card = draw_card()
+    player_card = draw_card(printcard=True)
     val = deck_dict[player_card]
 # set the cards value
     if player_card == 'Ace':
@@ -139,18 +158,18 @@ def player_hit(double=True):
     return
 
 def player_stand():
-    print "The dealer's hand: %s" %(current_round.comp_hand)
+    print "The dealer's hand: %s" %(current_round.comp_hand_eval)
     if current_round.player_hand_soft > 21:
         eval_hand = current_round.player_hand
     elif current_round.player_hand_soft <= 21:
         eval_hand = current_round.player_hand_soft    
-    if eval_hand > current_round.comp_hand:
+    if eval_hand > current_round.comp_hand_eval:
         print "You win the round!. Your winnings: %s" %(player.bet*2)
         player.adjust_bankroll((player.bet*2),add=True)
-    elif eval_hand == current_round.comp_hand:
+    elif eval_hand == current_round.comp_hand_eval:
         print "Stand off!. Your winnings: %s" %(player.bet)
         player.adjust_bankroll((player.bet),add=True)                                                                                            
-    elif eval_hand < current_round.comp_hand:
+    elif eval_hand < current_round.comp_hand_eval:
         print "You lose the round!"
         player.adjust_bankroll((player.bet),add=False)
     print "Your bankroll: %s" %player.bankroll
@@ -189,4 +208,20 @@ def hit_stand_double():
                 continue
     return
 
-    
+def comp_play():
+    if current_round.comp_hand_soft < 17:    
+        comp_card = draw_card(printcard=False)
+        if current_round.comp_hand_soft == 0:
+            current_round.set_first_comp_card(comp_card)
+        if comp_card == 'Ace':
+            current_round.set_comp_hand_soft(11)
+            current_round.set_comp_hand(1)
+        else:
+            current_round.set_comp_hand_soft(deck_dict[comp_card])
+            current_round.set_comp_hand(deck_dict[comp_card])
+    else:    
+        comp_play()
+    if current_round.comp_hand >= current_round.comp_hand_soft:
+        current_round.set_comp_hand_eval(current_round.comp_hand)
+    elif current_round.comp_hand_soft > current_round.comp_hand:
+        current_round.set_comp_hand_eval(current_round.comp_hand_soft)
