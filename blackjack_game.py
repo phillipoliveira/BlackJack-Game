@@ -93,8 +93,8 @@ def play():
 def how_many_decks():
     while True:
         try: 
-            num_of_decks = int(raw_input("How many decks do you want to play with?: (enter an integer)"))
-            if num_of_decks == 0:
+            num_of_decks = int(raw_input("How many decks do you want to play with?: (Enter an number greater than one, but less than 10.)"))
+            if num_of_decks not in range(1,10):
                 raise ValueError
         except: 
             continue
@@ -107,6 +107,7 @@ def new_round():
     if player.bankroll <= 4:
         print "Your bankroll has dropped below $5. You lose!"
         reset_game()
+        break
     else:
         current_round.hand_num = 0
         current_round.set_round_num(1)
