@@ -246,7 +246,7 @@ def comp_play():
 #        print "comp card drawn"
 #        print "val type: %s" %(type(val))
         if current_round.comp_hand_soft == 0:
-#            print "setting first comp card"
+            print "setting first comp card"
             current_round.set_first_comp_card(comp_card)
             if comp_card == 'Ace':
                 current_round.set_comp_hand_soft(11)
@@ -255,6 +255,7 @@ def comp_play():
                 current_round.set_comp_hand_soft(val)
                 current_round.set_comp_hand(val)
         else:
+#            print "dealer's hitting"
             if comp_card == 'Ace':
                 current_round.set_comp_hand_soft(11)
                 current_round.set_comp_hand(1)
@@ -262,8 +263,10 @@ def comp_play():
                 current_round.set_comp_hand_soft(val)
                 current_round.set_comp_hand(val)
     if current_round.comp_hand > 21:
+#        print "dealer's card soft is the eval card"
         current_round.set_comp_hand_eval(current_round.comp_hand_soft)
     elif current_round.comp_hand_soft <= current_round.comp_hand:
+#        print "dealer's card hard is the eval card"
         current_round.set_comp_hand_eval(current_round.comp_hand)
 #    print "comp hand eval: %s" %(current_round.comp_hand_eval)
 #    print "comp hand: %s" %(current_round.comp_hand)
