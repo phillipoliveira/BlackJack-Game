@@ -104,6 +104,9 @@ def how_many_decks():
     return
     
 def new_round():
+    if player.bankroll <= 4
+        print "Your bankroll has dropped below $5. You lose!"
+        reset_game()
     current_round.hand_num = 0
     current_round.set_round_num(1)
     current_round.player_hand = 0
@@ -121,9 +124,11 @@ def place_bet():
     print_card(str(current_round.first_comp_card))
     while True:
         try: 
-            bet = int(raw_input("Place your bet! Enter a number less than your current bankroll (%s): " %(player.bankroll)))
+            bet = int(raw_input("Place your bet! Enter a number less than your current bankroll (%s). Minimum bet = $5 " %(player.bankroll)))
             player.set_bet(bet)
             if bet > player.bankroll:
+                raise ValueError
+            elif bet < 5:
                 raise ValueError
         except: 
             continue
