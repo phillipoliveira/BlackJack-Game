@@ -46,10 +46,10 @@ class Round(object):
         self.first_comp_card = asign_first_card
     
     def set_comp_hand(self,new_comp_hand):
-        self.first_comp_card = new_comp_hand
+        self.comp_hand += new_comp_hand
 
     def set_comp_hand_soft(self,new_comp_hand_soft):
-        self.comp_hand_soft = new_comp_hand_soft 
+        self.comp_hand_soft += new_comp_hand_soft 
         
     def set_comp_hand_eval(self,new_comp_hand_eval):
         self.comp_hand_eval = new_comp_hand_eval
@@ -103,25 +103,23 @@ def how_many_decks():
             new_round()
     return
     
-def print_dealer():
-    print "The dealer card:"
-    print_card(str(current_round.first_comp_card)
-    
 def new_round():
     current_round.hand_num = 0
     current_round.set_round_num(1)
     current_round.player_hand = 0
     current_round.player_hand_soft = 0
     current_round.comp_hand = 0
-    current_round.comp_hand_soft = 0  
+    current_round.comp_hand_soft = 0
+    current_round.first_comp_card = 0
     comp_play()
-    print_dealer()
-    place_bet()
     return
     
 def place_bet():
-        print_dealer()
-        while True:
+    global player
+    global current_hand
+    print "The dealer card:"
+    print_card(str(current_round.first_comp_card))
+    while True:
         try: 
             bet = int(raw_input("Place your bet! Enter a number less than your current bankroll (%s): " %(player.bankroll)))
             player.set_bet(bet)
@@ -144,17 +142,19 @@ def player_hit(double=True):
         current_round.set_player_hand_soft(val)
         current_round.set_player_hand(val)
 # calculate the player hand and determine if they won.
+#    print "Your hand: %s" %(current_round.player_hand)
     if current_round.player_hand > 21:
         print "Bust!"
         player.adjust_bankroll((player.bet),add=False)
         print "Your bankroll: %s" %player.bankroll
+        print "Starting the next round..."
         new_round()
     else:
         current_round.set_hand_num(1)
-    if double == True:
-        player_stand()
-    elif double == False:    
-        hit_stand_double()
+        if double == True:
+            player_stand()
+        elif double == False:
+            hit_stand_double()
     return
 
 def player_stand():
@@ -162,8 +162,11 @@ def player_stand():
     if current_round.player_hand_soft > 21:
         eval_hand = current_round.player_hand
     elif current_round.player_hand_soft <= 21:
-        eval_hand = current_round.player_hand_soft    
-    if eval_hand > current_round.comp_hand_eval:
+        eval_hand = current_round.player_hand_soft
+    if  current_round.comp_hand_eval > 21:
+        print "The dealer busted!. Your winnings: %s" %(player.bet*2)
+        player.adjust_bankroll((player.bet*2),add=True) 
+    elif eval_hand > current_round.comp_hand_eval:
         print "You win the round!. Your winnings: %s" %(player.bet*2)
         player.adjust_bankroll((player.bet*2),add=True)
     elif eval_hand == current_round.comp_hand_eval:
@@ -184,7 +187,8 @@ def player_double():
 
 
 def hit_stand_double():
-    if current_round.hand_num == 1:
+    if current_round.hand_num == 0:
+        print "Your first card:"
         player_hit(double=False)
         return
     else:
@@ -209,21 +213,31 @@ def hit_stand_double():
     return
 
 def comp_play():
-    if current_round.comp_hand_soft < 17:    
+    while current_round.comp_hand_soft < 17:    
         comp_card = draw_card(printcard=False)
+        val = deck_dict[comp_card]
+#        print "comp card drawn"
+#        print "val type: %s" %(type(val))
         if current_round.comp_hand_soft == 0:
+#            print "setting first comp card"
             current_round.set_first_comp_card(comp_card)
-        if comp_card == 'Ace':
-            current_round.set_comp_hand_soft(11)
-            current_round.set_comp_hand(1)
+            if comp_card == 'Ace':
+                current_round.set_comp_hand_soft(11)
+                current_round.set_comp_hand(1)
+            else:
+                current_round.set_comp_hand_soft(val)
+                current_round.set_comp_hand(val)
         else:
-            current_round.set_comp_hand_soft(deck_dict[comp_card])
-            current_round.set_comp_hand(deck_dict[comp_card])
-    else:    
-        comp_play()
-    if current_round.comp_hand >= current_round.comp_hand_soft:
-        current_round.set_comp_hand_eval(current_round.comp_hand)
-    elif current_round.comp_hand_soft > current_round.comp_hand:
+            if comp_card == 'Ace':
+                current_round.set_comp_hand_soft(11)
+                current_round.set_comp_hand(1)
+            else:
+                current_round.set_comp_hand_soft(val)
+                current_round.set_comp_hand(val)
+    if current_round.comp_hand > 21:
         current_round.set_comp_hand_eval(current_round.comp_hand_soft)
-
-play()
+    elif current_round.comp_hand_soft <= current_round.comp_hand:
+        current_round.set_comp_hand_eval(current_round.comp_hand)
+#    print "comp hand eval: %s" %(current_round.comp_hand_eval)
+#    print "comp hand: %s" %(current_round.comp_hand)
+    place_bet()
