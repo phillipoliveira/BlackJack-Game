@@ -1,11 +1,11 @@
 from random import choice
-global player
-global current_round
-global deck_list
-global deck_dict
 
-def reset_game():
-    deck_list = ['1','2','3',"4","5","6","7","8","9","10","Jack","Queen","King","Ace"]*8
+def reset_game(num_of_decks):
+    global player
+    global current_round
+    global deck_list
+    global deck_dict
+    deck_list = ['1','2','3',"4","5","6","7","8","9","10","Jack","Queen","King","Ace"]*4*num_of_decks
     deck_dict = {'1':1,'2':2,'3':3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"Jack":10,"Queen":10,"King":10,"Ace":1}
     player = Player()
     current_round = Round()
@@ -28,10 +28,11 @@ class Player(object):
         self.bet = new_bet
     
 class Round(object):
-    def __init__(self,round_num=0,comp_hand=0,player_hand=0,player_hand_soft=0,hand_num=0):
+    def __init__(self,round_num=0,comp_hand=0,comp_hand_soft=0,player_hand=0,player_hand_soft=0,hand_num=0):
         self.round_num = round_num
         self.comp_hand = comp_hand
-        self.hand_num_soft = hand_num
+        self.comp_hand_soft = comp_hand_soft
+        self.hand_num = hand_num
         self.player_hand = player_hand
         self.player_hand_soft = player_hand_soft
         
@@ -63,31 +64,46 @@ def print_card(card):
     print "|%s|" %(card.center(7))
     print "|       |"
     print "|_______|"
+    return
 
 
 def play():
-    reset_game()
     print "Welcome to Blackjack!"
     print "Rules:"
     print "• Type 'Hit' or 'Stand' at the beginning of each round"
     print "• You'll be given the option to double in your first two turns."
     print "• All face cards are equal 10, with the exception of the Ace which is equal to 1 or 11"
     print "• You'll start with a bankroll of 100"
-    new_round()
-
+    how_many_decks()
+    return
+    
+def how_many_decks():
+    while True:
+        try: 
+            num_of_decks = int(raw_input("How many decks do you want to play with?: (enter an integer)"))
+        except: 
+            continue
+        else:
+            reset_game(num_of_decks)
+            new_round()
+    return
+    
 def new_round():
-    global current_round
-#    comp_play()
+    current_round.hand_num = 0
     current_round.set_round_num(1)
-    set_hand_num(0)
-    place_bet()    
-
+    current_round.player_hand = 0
+    current_round.player_hand_soft = 0
+    current_round.comp_hand = 0
+    current_round.comp_hand_soft = 0    
+    place_bet()
+    return
+    
 def place_bet():
     global player
     global current_hand
     while True:
         try: 
-            bet = int(raw_input("Please enter a number, less than your current bankroll (%s): " %(player.bankroll)))
+            bet = int(raw_input("Place your bet! Enter a number less than your current bankroll (%s): " %(player.bankroll)))
             player.set_bet(bet)
             if bet > player.bankroll:
                 raise ValueError
@@ -95,8 +111,9 @@ def place_bet():
             continue
         else:
             hit_stand_double()
+        return
 
-def player_hit():
+def player_hit(double=True):
     global new_round
     player_card = draw_card()
     val = deck_dict[player_card]
@@ -112,11 +129,14 @@ def player_hit():
         print "Bust!"
         player.adjust_bankroll((player.bet),add=False)
         print "Your bankroll: %s" %player.bankroll
-        new_round = True
+        new_round()
     else:
-        new_round = False
         current_round.set_hand_num(1)
+    if double == True:
+        player_stand()
+    elif double == False:    
         hit_stand_double()
+    return
 
 def player_stand():
     print "The dealer's hand: %s" %(current_round.comp_hand)
@@ -135,34 +155,38 @@ def player_stand():
         player.adjust_bankroll((player.bet),add=False)
     print "Your bankroll: %s" %player.bankroll
     print "Starting the next round..."
-    new_round = True    
+    new_round()
+    return
 
 def player_double():
     player.set_bet((player.bet*2))
-    player_stand()
+    player_hit(double=True)
+    return
 
 
 def hit_stand_double():
-    if current_round.hand_num == 0:
-        player_hit()
+    if current_round.hand_num == 1:
+        player_hit(double=False)
         return
-    while True:
-        try: 
-            if current_round.hand_num <= 1 and player.bet <= player.bankroll:
-                answer = str(raw_input("Do you want to hit, stand or double?: "))
-                if answer.lower() == "hit":
-                    player_hit()
-                if answer.lower() == "stand":
-                    player_stand()
-                if answer.lower() == 'double':
-                    player_double()
-            else:
-                answer = str(raw_input("Do you want to Hit or stand?"))
-                if answer.lower() == "hit":
-                    player_hit(bet)
-                if answer.lower() == "stand":
-                    player_stand()            
-        except: 
-            continue
+    else:
+        while True:
+            try: 
+                if current_round.hand_num <= 2 and player.bet <= player.bankroll:
+                    answer = str(raw_input("Do you want to hit, stand or double? "))
+                    if answer.lower() == "hit":
+                        player_hit(double=False)
+                    if answer.lower() == "stand":
+                        player_stand()
+                    if answer.lower() == 'double':
+                        player_double()
+                else:
+                    answer = str(raw_input("Do you want to Hit or stand?" ))
+                    if answer.lower() == "hit":
+                        player_hit(double=False)
+                    if answer.lower() == "stand":
+                        player_stand()            
+            except: 
+                continue
+    return
 
     
