@@ -225,3 +225,5 @@ def comp_play():
         current_round.set_comp_hand_eval(current_round.comp_hand)
     elif current_round.comp_hand_soft > current_round.comp_hand:
         current_round.set_comp_hand_eval(current_round.comp_hand_soft)
+
+play()
