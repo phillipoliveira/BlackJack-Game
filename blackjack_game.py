@@ -5,8 +5,8 @@ def reset_game(num_of_decks):
     global current_round
     global deck_list
     global deck_dict
-    deck_list = ['1','2','3',"4","5","6","7","8","9","10","Jack","Queen","King","Ace"]*4*num_of_decks
-    deck_dict = {'1':1,'2':2,'3':3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"Jack":10,"Queen":10,"King":10,"Ace":1}
+    deck_list = ['2','3',"4","5","6","7","8","9","10","Jack","Queen","King","Ace"]*4*num_of_decks
+    deck_dict = {'2':2,'3':3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"Jack":10,"Queen":10,"King":10,"Ace":1}
     player = Player()
     current_round = Round()
 
@@ -81,6 +81,8 @@ def print_card(card):
 
 
 def play():
+    global game
+    game = True
     print "Welcome to Blackjack!"
     print "Rules:"
     print "• Type 'Hit' or 'Stand' at the beginning of each round"
@@ -91,7 +93,8 @@ def play():
     return
     
 def how_many_decks():
-    while True:
+    global game
+    while game == True:
         try: 
             num_of_decks = int(raw_input("How many decks do you want to play with?: (Enter an number greater than one, but less than 10.)"))
             if num_of_decks not in range(1,10):
@@ -102,12 +105,28 @@ def how_many_decks():
             reset_game(num_of_decks)
             new_round()
     return
-    
+
+def play_again_q():
+    global game
+    answer = ""
+    while answer == "":
+        try: 
+            responce = str(raw_input("Do you want to play again? "))
+            if responce.lower() == "yes":
+                answer = "yes"
+                play()
+            elif responce.lower() == "no":
+                answer = "no"
+                game = False
+        except: 
+            continue
+    return
+
 def new_round():
     if player.bankroll <= 4:
         print "Your bankroll has dropped below $5. You lose!"
-        reset_game()
-        break
+        play_again_q()
+        
     else:
         current_round.hand_num = 0
         current_round.set_round_num(1)
@@ -194,12 +213,13 @@ def player_double():
 
 
 def hit_stand_double():
+    global game
     if current_round.hand_num == 0:
         print "Your first card:"
         player_hit(double=False)
         return
     else:
-        while True:
+        while game == True:
             try: 
                 if current_round.hand_num <= 2 and player.bet <= player.bankroll:
                     answer = str(raw_input("Do you want to hit, stand or double? "))
