@@ -8,7 +8,7 @@ def reset_game(num_of_decks):
     deck_list = ['2','3',"4","5","6","7","8","9","10","Jack","Queen","King","Ace"]*4*num_of_decks
     deck_dict = {'2':2,'3':3,"4":4,"5":5,"6":6,"7":7,"8":8,"9":9,"10":10,"Jack":10,"Queen":10,"King":10,"Ace":1}
     player = Player()
-    current_round = Round()
+    current_round = round_stats()
 
 class Player(object):    
     def __init__(self,bankroll=100,bet=0):
@@ -27,8 +27,8 @@ class Player(object):
     def set_bet(self,new_bet):
         self.bet = new_bet
     
-class Round(object):
-    def __init__(self,round_num=0,comp_hand=0,comp_hand_soft=0,player_hand=0,player_hand_soft=0,hand_num=0,comp_hand_eval=0,first_comp_card=0):
+class round_stats(object):
+    def __init__(self,round_num=0,comp_hand=0,comp_hand_soft=0,player_hand=0,player_hand_soft=0,hand_num=0,player_hand_list=[],player_hand_last=0,comp_hand_eval=0,first_comp_card=0):
         self.round_num = round_num
         self.comp_hand = comp_hand
         self.comp_hand_soft = comp_hand_soft
@@ -36,9 +36,10 @@ class Round(object):
         self.hand_num = hand_num
         self.player_hand = player_hand
         self.player_hand_soft = player_hand_soft
+        self.player_hand_list = player_hand_list
+        self.player_hand_last = player_hand_last
         self.first_comp_card = first_comp_card
 
-        
     def set_round_num(self,new_round_num):
         self.round_num += new_round_num
     
@@ -60,14 +61,18 @@ class Round(object):
     def set_player_hand_soft(self,new_player_hand_soft):
         self.player_hand_soft += new_player_hand_soft
         
+    def set_player_hand_list(self,added_card):
+        self.player_hand_list.append(added_card)
+    
+    def set_player_hand_last(self,last_card):
+        self.player_hand_last = last_card
+        
     def set_hand_num(self,new_hand_num):
         self.hand_num += new_hand_num
 
-def draw_card(printcard=True):
+def draw_card():
     card = str(choice(deck_list))
     deck_list.remove(card)
-    if printcard == True:
-        print_card(card)
     return card
 
 def print_card(card):
@@ -134,15 +139,14 @@ def new_round():
         current_round.player_hand_soft = 0
         current_round.comp_hand = 0
         current_round.comp_hand_soft = 0
+        current_round.player_hand_list = []
         current_round.first_comp_card = 0
         comp_play()
         return
     
 def place_bet():
-    global player
-    global current_hand
     print "The dealer card:"
-    print_card(str(current_round.first_comp_card))
+#    print_card(str(current_round.first_comp_card))
     while True:
         try: 
             bet = int(raw_input("Place your bet! Enter a number less than your current bankroll (%s). Minimum bet = $5 " %(player.bankroll)))
@@ -154,11 +158,14 @@ def place_bet():
         except: 
             continue
         else:
-            hit_stand_double()
+            hit_stand_double_split()
         return
 
 def player_hit(double=True):
-    player_card = draw_card(printcard=True)
+    player_card = draw_card()
+    current_round.set_player_hand_list(player_card)
+#    print current_round.player_hand_list
+    print_card(player_card)
     val = deck_dict[player_card]
 # set the cards value
     if player_card == 'Ace':
@@ -180,7 +187,8 @@ def player_hit(double=True):
         if double == True:
             player_stand()
         elif double == False:
-            hit_stand_double()
+#            print "Starting the next hand.."
+            hit_stand_double_split()
     return
 
 def player_stand():
@@ -189,6 +197,7 @@ def player_stand():
         eval_hand = current_round.player_hand
     elif current_round.player_hand_soft <= 21:
         eval_hand = current_round.player_hand_soft
+    print "Your hand: %s" %(eval_hand)
     if  current_round.comp_hand_eval > 21:
         print "The dealer busted!. Your winnings: %s" %(player.bet*2)
         player.adjust_bankroll((player.bet*2),add=True) 
@@ -211,29 +220,67 @@ def player_double():
     player_hit(double=True)
     return
 
+def player_split_set():
+    set_player_hand_last(current_round.player_hand_list[0])
+    current_round.player_hand_list.pop()
+    hit_stand_double_split()
+    
+def player_split():
+    player_card = draw_card()
+    current_round.set_player_hand_list(player_card)
+    print current_round.player_hand_list
+    print_card(player_card)
+    val = deck_dict[player_card]
+# set the cards value
+    if player_card == 'Ace':
+        current_round.set_player_hand_soft(11)
+        current_round.set_player_hand(1)
+    else:
+        current_round.set_player_hand_soft(val)
+        current_round.set_player_hand(val)
+    current_round.set_hand_num(1)
+    hit_stand_double_split(double=False)
 
-def hit_stand_double():
+def hit_stand_double_split():
     global game
-    if current_round.hand_num == 0:
+    if current_round.player_hand_last != 0:
+#        print "splitting the round.."
+        player_split()          
+    elif current_round.hand_num == 0:
         print "Your first card:"
         player_hit(double=False)
         return
     else:
+#        print "asking you for your next move..."
         while game == True:
             try: 
-                if current_round.hand_num <= 2 and player.bet <= player.bankroll:
+                if (len(current_round.player_hand_list) == 2 and 
+                    current_round.player_hand_list[0] == current_round.player_hand_list[1] and
+                    current_round.hand_num <= 2 and 
+                    player.bet <= player.bankroll):
+                    answer = str(raw_input("Do you want to hit, stand, double, or split? "))
+                    if answer.lower() == "hit":
+                        player_hit(double=False)
+                    elif answer.lower() == "stand":
+                        player_stand()
+                    elif answer.lower() == 'double':
+                        player_double()
+                    elif answer.lower() == 'split':
+                        player_split()
+                
+                elif current_round.hand_num <= 1 and player.bet <= player.bankroll:
                     answer = str(raw_input("Do you want to hit, stand or double? "))
                     if answer.lower() == "hit":
                         player_hit(double=False)
-                    if answer.lower() == "stand":
+                    elif answer.lower() == "stand":
                         player_stand()
-                    if answer.lower() == 'double':
+                    elif answer.lower() == 'double':
                         player_double()
                 else:
                     answer = str(raw_input("Do you want to Hit or stand?" ))
                     if answer.lower() == "hit":
                         player_hit(double=False)
-                    if answer.lower() == "stand":
+                    elif answer.lower() == "stand":
                         player_stand()            
             except: 
                 continue
@@ -241,12 +288,12 @@ def hit_stand_double():
 
 def comp_play():
     while current_round.comp_hand_soft < 17:    
-        comp_card = draw_card(printcard=False)
+        comp_card = draw_card()
         val = deck_dict[comp_card]
 #        print "comp card drawn"
 #        print "val type: %s" %(type(val))
         if current_round.comp_hand_soft == 0:
-            print "setting first comp card"
+#            print "setting first comp card"
             current_round.set_first_comp_card(comp_card)
             if comp_card == 'Ace':
                 current_round.set_comp_hand_soft(11)
