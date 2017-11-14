@@ -1,7 +1,7 @@
 from random import choice
 
 def reset_game():
-    print "reseting game.."
+#    print "reseting game.."
     global player
     global current_round
     global deck_dict
@@ -32,7 +32,7 @@ class Player(object):
         self.bet = new_bet
     
 class round_stats(object):
-    def __init__(self,round_num=0,comp_hand=0,comp_hand_soft=0,player_hand=0,player_hand_soft=0,hand_num=0,player_hand_list=[],player_hand_last=[],comp_hand_eval=0,first_comp_card=0,new_bet=True,num_of_decks=0,deck_list=[]):
+    def __init__(self,round_num=0,comp_hand=0,comp_hand_soft=0,player_hand=0,player_hand_soft=0,hand_num=0,player_hand_list=[],player_hand_last=[],comp_hand_eval=0,first_comp_card=0,num_of_decks=0,deck_list=[]):
         self.round_num = round_num
         self.comp_hand = comp_hand
         self.comp_hand_soft = comp_hand_soft
@@ -43,7 +43,6 @@ class round_stats(object):
         self.player_hand_list = player_hand_list
         self.player_hand_last = player_hand_last
         self.first_comp_card = first_comp_card
-        self.new_bet = True
         self.num_of_decks = num_of_decks
         self.deck_list = deck_list
 
@@ -139,38 +138,39 @@ def new_round():
     if player.bankroll <= 4:
         print "Your bankroll has dropped below $5. You lose!"
         play_again_q()
-        
     else:
-        current_round.hand_num = 0
-        current_round.set_round_num(1)
-        current_round.player_hand = 0
-        current_round.player_hand_soft = 0
+        current_round.first_comp_card = 0
         current_round.comp_hand = 0
         current_round.comp_hand_soft = 0
-        current_round.player_hand_list = []
-        current_round.first_comp_card = 0
+        reset_round_stats()
         comp_play()
-        return
+        print "new_round else code run"
+        
+def reset_round_stats():
+    print 'round stats reset..'
+    current_round.hand_num = 0
+    current_round.set_round_num(1)
+    current_round.player_hand = 0
+    current_round.player_hand_soft = 0
+    current_round.player_hand_list = []
+    return
     
-def place_bet(new_bet=True):
+def place_bet():
     print "The dealer card:"
     print_card(str(current_round.first_comp_card))
-    if current_round.new_bet == True:
-        while True:
-            try: 
-                bet = int(raw_input("Place your bet! Enter a number less than your current bankroll (%s). Minimum bet = $5 " %(player.bankroll)))
-                player.set_bet(bet)
-                if bet > player.bankroll:
-                    raise ValueError
-                elif bet < 5:
-                    raise ValueError
-            except: 
-                continue
-            else:
-                hit_stand_double_split()
-            return
-    else:
-        hit_stand_double_split()
+    while True:
+        try: 
+            bet = int(raw_input("Place your bet! Enter a number less than your current bankroll (%s). Minimum bet = $5 " %(player.bankroll)))
+            player.set_bet(bet)
+            if bet > player.bankroll:
+                raise ValueError
+            elif bet < 5:
+                raise ValueError
+        except: 
+            continue
+        else:
+            hit_stand_double_split()
+        return
         
 def player_hit(double=True):
     player_card = draw_card()
@@ -192,7 +192,6 @@ def player_hit(double=True):
         player.adjust_bankroll((player.bet),add=False)
         print "Your bankroll: %s" %player.bankroll
         print "Starting the next round..."
-        current_round.new_bet = True
         new_round()
     else:
         current_round.set_hand_num(1)
@@ -224,7 +223,6 @@ def player_stand():
         player.adjust_bankroll((player.bet),add=False)
     print "Your bankroll: %s" %player.bankroll
     print "Starting the next round..."
-    current_round.new_bet = True
     new_round()
     return
 
@@ -235,13 +233,14 @@ def player_double():
 
 def player_split_set():
     print 'assigning the next first cards...'
-    current_round.player_hand_last.insert(current_round.player_hand_list[0],0)
-    current_round.deck_list.insert(current_round.player_hand_list[0],0)
-    current_round.player_hand_last.insert(current_round.player_hand_list[1],0)
-    current_round.deck_list.insert(current_round.player_hand_list[1],0)
+    current_round.player_hand_last.append(current_round.player_hand_list[0])
+    current_round.deck_list.append(current_round.player_hand_list[0])
+    current_round.player_hand_last.append(current_round.player_hand_list[1])
+    current_round.deck_list.append(current_round.player_hand_list[1])
     print "Your hand has been split. The round is restarting with your new starter cards."
-    current_round.new_bet = False
-    new_round()
+    reset_round_stats()
+    hit_stand_double_split()
+    
     
 def player_split():
     player_card = current_round.player_hand_last[0]
@@ -262,9 +261,9 @@ def player_split():
 def hit_stand_double_split():
     global game
     if len(current_round.deck_list) == 0:
-        print "You're out of cards! The deck has been reset."
+        print "You're out of cards!"
         reset_deck()
-    if current_round.hand_num == 0 and len(current_round.player_hand_last) != 0:
+    if current_round.hand_num == 0 and len(current_round.player_hand_last) > 0:
         print "Starting the round with your split card:"
         player_split()          
     elif current_round.hand_num == 0:
@@ -339,6 +338,6 @@ def comp_play():
         current_round.set_comp_hand_eval(current_round.comp_hand)
 #    print "comp hand eval: %s" %(current_round.comp_hand_eval)
 #    print "comp hand: %s" %(current_round.comp_hand)
-    place_bet(new_bet=True)
+    place_bet()
 
 play()
