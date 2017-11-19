@@ -40,7 +40,7 @@ class Cards(object):
                 continue
             else:
                 self.set_num_of_decks(new_num_of_decks)
-                print "deck num = %s" %(self.num_of_decks)
+#                print "deck num = %s" %(self.num_of_decks)
                 self.reset_deck(self.num_of_decks)
                 self.game_functions.new_round()
         return 
@@ -148,6 +148,7 @@ class Game_functions(object):
             print "Your bankroll has dropped below $5. You lose!"
             self.play_again_q()
         else:
+            print "---------------------------------------------"
             bjroundstats.first_comp_card = 0
             bjroundstats.comp_hand = 0
             bjroundstats.comp_hand_soft = 0
@@ -241,9 +242,7 @@ class Game_functions(object):
     def player_split_set(self):
 #        print 'assigning the next first cards...'
         bjroundstats.player_hand_last.append(bjroundstats.player_hand_list[0])
-        bjcards.deck_list.append(bjroundstats.player_hand_list[0])
         bjroundstats.player_hand_last.append(bjroundstats.player_hand_list[1])
-        bjcards.deck_list.append(bjroundstats.player_hand_list[1])
 #        print "your hand is clear"
         print "Your hand has been split. The round is restarting with your new starter cards."
         self.reset_round_stats()
